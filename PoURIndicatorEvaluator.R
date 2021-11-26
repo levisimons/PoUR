@@ -36,5 +36,5 @@ Primer <- "FITS"
 SEDIThreshold = 0.5
 RFEvaluationFiltered <- RFEvaluation[RFEvaluation$MeanSEDI >= SEDIThreshold & RFEvaluation$Primer==Primer,]
 tmp <- with(RFEvaluationFiltered[,c("Taxa","Round")],split(Taxa,Round))
-ggVennDiagram(tmp)+labs(title = "Species by sample time point",subtitle=paste("Primer:",Primer,", SEDI >",SEDIThreshold))
+ggVennDiagram(tmp)+labs(title = "Indicator species by sample time point",subtitle=paste("Primer:",Primer,", SEDI >",SEDIThreshold))
                         
