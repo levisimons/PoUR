@@ -6,7 +6,8 @@ wd <- "~/Desktop/eDNA-metadata/"
 setwd(wd)
 
 #Input taxonomic level to aggregate on.  Rank 7 is the most resolved, and Rank 1 is the least.
-rank=7
+rank=5
+TaxonomicRanks <- c("Kingdom","Phylum","Class","Order","Family","Genus","Species")
 
 #Get random forest model evaluations for the detection of taxa against environmental variables.
 SEDIFiles <- list.files(path=wd,pattern=paste('RFEvaluation(.*?)Round(.*?)Rank',rank,sep=""))
@@ -36,5 +37,5 @@ Primer <- "FITS"
 SEDIThreshold = 0.5
 RFEvaluationFiltered <- RFEvaluation[RFEvaluation$MeanSEDI >= SEDIThreshold & RFEvaluation$Primer==Primer,]
 tmp <- with(RFEvaluationFiltered[,c("Taxa","Round")],split(Taxa,Round))
-ggVennDiagram(tmp)+labs(title = "Indicator species by sample time point",subtitle=paste("Primer:",Primer,", SEDI >",SEDIThreshold))
+ggVennDiagram(tmp)+labs(title=paste("Indicator",TaxonomicRanks[rank],"by sample time point"),subtitle=paste("Primer:",Primer,", SEDI >",SEDIThreshold)) + scale_fill_gradient(low = "yellow", high = "blue")
                         
