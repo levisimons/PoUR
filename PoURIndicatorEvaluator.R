@@ -1,15 +1,17 @@
 rm(list=ls())
 require(ggplot2)
 require(ggVennDiagram)
+
 wd <- "~/Desktop/eDNA-metadata/"
 #wd <- "/home1/alsimons/PoUR"
 setwd(wd)
 
 #Input taxonomic level to aggregate on.  Rank 7 is the most resolved, and Rank 1 is the least.
-rank=5
+rank=7
 TaxonomicRanks <- c("Kingdom","Phylum","Class","Order","Family","Genus","Species")
 
 #Get random forest model evaluations for the detection of taxa against environmental variables.
+#These were generated here: https://github.com/levisimons/PoUR/blob/main/PoURIndicators.R
 SEDIFiles <- list.files(path=wd,pattern=paste('RFEvaluation(.*?)Round(.*?)Rank',rank,sep=""))
 
 #Iterate over sample rounds and primer sets.
@@ -20,11 +22,13 @@ RFEvaluation <- data.frame()
 for(i in 1:3){
   for(Primer in Primers){
     filename <- paste("RFEvaluation",Primer,"Round",i,"Rank",rank,".txt",sep="")
-    tmp <- read.table(filename, header=TRUE, sep="\t",as.is=T,skip=0,fill=TRUE,check.names=FALSE,quote = "\"", encoding = "UTF-8")
-    if(nrow(tmp)>0){
-      tmp$Round <- i
-      tmp$Primer <- Primer
-      RFEvaluation <- rbind(RFEvaluation,tmp) 
+    if(filename %in% SEDIFiles){
+      tmp <- read.table(filename, header=TRUE, sep="\t",as.is=T,skip=0,fill=TRUE,check.names=FALSE,quote = "\"", encoding = "UTF-8")
+      if(nrow(tmp)>0){
+        tmp$Round <- i
+        tmp$Primer <- Primer
+        RFEvaluation <- rbind(RFEvaluation,tmp) 
+      }
     }
   }
 }
@@ -37,5 +41,8 @@ Primer <- "FITS"
 SEDIThreshold = 0.5
 RFEvaluationFiltered <- RFEvaluation[RFEvaluation$MeanSEDI >= SEDIThreshold & RFEvaluation$Primer==Primer,]
 tmp <- with(RFEvaluationFiltered[,c("Taxa","Round")],split(Taxa,Round))
-ggVennDiagram(tmp)+labs(title=paste("Indicator",TaxonomicRanks[rank],"by sample time point"),subtitle=paste("Primer:",Primer,", SEDI >",SEDIThreshold)) + scale_fill_gradient(low = "yellow", high = "blue")
-                        
+if(SEDIThreshold>=0){
+  ggVennDiagram(tmp)+theme(plot.title = element_text(hjust = 0.5),plot.subtitle = element_text(hjust = 0.5),legend.position="bottom")+labs(title=paste("Indicator",TaxonomicRanks[rank],"by sample time point"),subtitle=paste("Primer:",Primer,", SEDI >",SEDIThreshold)) + scale_fill_gradient(low = "yellow", high = "blue")
+} else{
+  ggVennDiagram(tmp)+theme(plot.title = element_text(hjust = 0.5),plot.subtitle = element_text(hjust = 0.5),legend.position="bottom")+labs(title=paste("Indicator",TaxonomicRanks[rank],"by sample time point"),subtitle=paste("Primer:",Primer,", No SEDI cut-off")) + scale_fill_gradient(low = "yellow", high = "blue")
+}
