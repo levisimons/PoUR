@@ -21,6 +21,8 @@ rank=7
 #Iterate over sample rounds and primer sets.
 #Calculate zeta_4 and how much of the variation in it is due to variations
 #in geographic separation, environmental variations, or some unknown factor.
+#Calculate the relative likelihoods of an exponential versus power-law decay model
+#in zeta_N for N=1,4.
 #Primers
 Primers <- c("16S", "18S","CO1","VERT12S","PITS","FITS")
 #
