@@ -23,7 +23,7 @@ rank=7
 #given our environmental variables, then evaluate those models using the symmetric extremal dependence index (SEDI).
 #Primers
 Primers <- c("16S", "18S","CO1","VERT12S","PITS","FITS")
-for(i in 2:2){
+for(i in 1:3){
   for(Primer in Primers){
     #Get basic metadata for the eDNA sampling locations
     PoURMetadataInput <- read.table(PoURMetadataFiles[i], header=TRUE, sep=",",as.is=T,skip=0,fill=TRUE,check.names=FALSE,quote = "\"", encoding = "UTF-8")
@@ -113,7 +113,7 @@ for(i in 2:2){
     FullData <- FullData[,c(taxa,EnvVar)]
     
     #Define data frames to collect taxonomic groups and their random forest model evaluations.
-    tmp <- data.frame(matrix(nrow=1,ncol=2))
+    tmp <- data.frame(matrix(nrow=1,ncol=3))
     colnames(tmp) <- c("Taxa","SEDI")
     RFEvaluation <- data.frame()
     RFEvaluationTotal <- data.frame()
@@ -153,6 +153,8 @@ for(i in 2:2){
             d <- rf1$confusion[1,1] #True negatives
             H <- a/(a+c)
             F <- b/(b+d)
+            #TSS: True Skill Statistic
+            tmp$TSS <- H-F
             #SEDI: Symmetric extremal dependence index
             SEDI <- (log(F)-log(H)-log(1-F)+log(1-H))/(log(F)+log(H)+log(1-F)+log(1-H))
             tmp$SEDI <- SEDI
@@ -172,9 +174,12 @@ for(i in 2:2){
     }
     #Remove rows with missing data.  Summarize results within a given sampling around and primer set.
     RFEvaluationTotal$SEDI[is.nan(RFEvaluationTotal$SEDI)] <- NA
-    RFEvaluationSummary <- plyr::ddply(RFEvaluationTotal, .(Taxa), summarize, MeanSEDI=mean(SEDI,na.rm=T), sdSEDI=sd(SEDI,na.rm=T))
+    RFEvaluationTotal$TSS[is.nan(RFEvaluationTotal$TSS)] <- NA
+    RFEvaluationSummary <- plyr::ddply(RFEvaluationTotal, .(Taxa), summarize, MeanSEDI=mean(SEDI,na.rm=T), sdSEDI=sd(SEDI,na.rm=T), MeanTSS=mean(TSS,na.rm=T), sdTSS=sd(TSS,na.rm=T))
     RFEvaluationSummary$MeanSEDI[is.nan(RFEvaluationSummary$MeanSEDI)] <- NA
     RFEvaluationSummary$sdSEDI[is.nan(RFEvaluationSummary$sdSEDI)] <- NA
+    RFEvaluationSummary$MeanTSS[is.nan(RFEvaluationSummary$MeanTSS)] <- NA
+    RFEvaluationSummary$sdTSS[is.nan(RFEvaluationSummary$sdTSS)] <- NA
     RFEvaluationSummary <- RFEvaluationSummary[complete.cases(RFEvaluationSummary),]
     if(nrow(RFEvaluationSummary)>0 & nrow(RFImportanceTotal)>0){
       #Summarize relative importance results.
