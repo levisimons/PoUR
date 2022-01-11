@@ -1,0 +1,57 @@
+﻿Variable,Description,Acquisition method
+bio01,BIO1 = Annual Mean Temperature,Remote sensing
+bio02,BIO2 = Mean Diurnal Range (Mean of monthly (max temp - min temp)),Remote sensing
+bio03,BIO3 = Isothermality (BIO2/BIO7) (* 100),Remote sensing
+bio04,BIO4 = Temperature Seasonality (standard deviation *100),Remote sensing
+bio05,BIO5 = Max Temperature of Warmest Month,Remote sensing
+bio06,BIO6 = Min Temperature of Coldest Month,Remote sensing
+bio07,BIO7 = Temperature Annual Range (BIO5-BIO6),Remote sensing
+bio08,BIO8 = Mean Temperature of Wettest Quarter,Remote sensing
+bio09,BIO9 = Mean Temperature of Driest Quarter,Remote sensing
+bio10,BIO10 = Mean Temperature of Warmest Quarter,Remote sensing
+bio11,BIO11 = Mean Temperature of Coldest Quarter,Remote sensing
+bio12,BIO12 = Annual Precipitation,Remote sensing
+bio13,BIO13 = Precipitation of Wettest Month,Remote sensing
+bio14,BIO14 = Precipitation of Driest Month,Remote sensing
+bio15,BIO15 = Precipitation Seasonality (Coefficient of Variation),Remote sensing
+bio16,BIO16 = Precipitation of Wettest Quarter,Remote sensing
+bio17,BIO17 = Precipitation of Driest Quarter,Remote sensing
+bio18,BIO18 = Precipitation of Warmest Quarter,Remote sensing
+bio19,BIO19 = Precipitation of Coldest Quarter,Remote sensing
+gHM,Global Human Modification index,Remote sensing
+landcover,USGS national land cover database ,Remote sensing
+impervious,Percent of the pixel covered by developed impervious surface,Remote sensing
+percent_tree_cover,Percent of the pixel that's covered by tree canopy.æ,Remote sensing
+Site,Geographic location of a set of samples,Field data
+River_Bottom,"Material forming the river bottom, such as concrete or natural river sediment",Field data
+Substrate,Whether the sample was taken from the water column or from sediment,Field data
+Habitat,Category of habitat in the immediate vicinity of river sample.,Field data
+Depth,Category describing how far into river sediment or water column the sample was taken.,Field data
+Biofilm,Whether a biofilm was present at the sampling site surface.,Field data
+Features,"Category describing the terrain encompassing the water sample, such as if it were taken from open water or a ravine.",Field data
+grtgroup,Predicted USDA soil great group probablities,Remote sensing
+soil pH in H20,Soil pH x 10 in H2O  at depth 0.00 m,Remote sensing
+soil organic carbon,Soil organic carbon content (fine earth fraction) in g per kg at depth 0.00 m,Remote sensing
+soil sand,Sand content (50 to 2000 micro meter) mass fraction in % at depth 0.00 m,Remote sensing
+soil clay,Clay content (0 ~ 2 micro meter) mass fraction in % at depth 0.00 m,Remote sensing
+soil bulk density,Bulk density (fine earth) in kg / cubic meter at depth 0.00 m,Remote sensing
+slope,the rate of change of elevation for each digital elevation model (DEM) cell.,Remote sensing
+aspect,Aspect is the direction of the maximum rate of change in the z-value from each cell in a raster surface.,Remote sensing
+elevation,elevation for each digital elevation model (DEM) cell.,Remote sensing
+B1,The Sentinel-2 data contain 13 UINT16 spectral bands representing TOA reflectance scaled by 10000.,Remote sensing
+B2,The Sentinel-2 data contain 13 UINT16 spectral bands representing TOA reflectance scaled by 10000.,Remote sensing
+B3,The Sentinel-2 data contain 13 UINT16 spectral bands representing TOA reflectance scaled by 10000.,Remote sensing
+B4,The Sentinel-2 data contain 13 UINT16 spectral bands representing TOA reflectance scaled by 10000.,Remote sensing
+B5,The Sentinel-2 data contain 13 UINT16 spectral bands representing TOA reflectance scaled by 10000.,Remote sensing
+B6,The Sentinel-2 data contain 13 UINT16 spectral bands representing TOA reflectance scaled by 10000.,Remote sensing
+B7,The Sentinel-2 data contain 13 UINT16 spectral bands representing TOA reflectance scaled by 10000.,Remote sensing
+B8,The Sentinel-2 data contain 13 UINT16 spectral bands representing TOA reflectance scaled by 10000.,Remote sensing
+B8A,The Sentinel-2 data contain 13 UINT16 spectral bands representing TOA reflectance scaled by 10000.,Remote sensing
+B9,The Sentinel-2 data contain 13 UINT16 spectral bands representing TOA reflectance scaled by 10000.,Remote sensing
+B10,The Sentinel-2 data contain 13 UINT16 spectral bands representing TOA reflectance scaled by 10000.,Remote sensing
+B11,The Sentinel-2 data contain 13 UINT16 spectral bands representing TOA reflectance scaled by 10000.,Remote sensing
+B12,The Sentinel-2 data contain 13 UINT16 spectral bands representing TOA reflectance scaled by 10000.,Remote sensing
+NDVI,LANDSAT/LC08/C01/T1_32DAY_NDVI,Remote sensing
+EVI,LANDSAT/LC08/C01/T1_32DAY_EVI,Remote sensing
+NBRT,LANDSAT/LC08/C01/T1_32DAY_NBRT,Remote sensing
+greenness,LANDSAT/LC8_L1T_ANNUAL_GREENEST_TOA/2017,Remote sensing
