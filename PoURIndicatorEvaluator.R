@@ -12,7 +12,7 @@ TaxonomicRanks <- c("Kingdom","Phylum","Class","Order","Family","Genus","Species
 
 #Get random forest model evaluations for the detection of taxa against environmental variables.
 #These were generated here: https://github.com/levisimons/PoUR/blob/main/PoURIndicators.R
-SEDIFiles <- list.files(path=wd,pattern=paste('RFEvaluation(.*?)Round(.*?)Rank',rank,sep=""))
+EvaluationFiles <- list.files(path=wd,pattern=paste('RFEvaluation(.*?)Round(.*?)Rank',rank,sep=""))
 
 #Iterate over sample rounds and primer sets.
 #Primers
@@ -22,7 +22,7 @@ RFEvaluation <- data.frame()
 for(i in 1:3){
   for(Primer in Primers){
     filename <- paste("RFEvaluation",Primer,"Round",i,"Rank",rank,".txt",sep="")
-    if(filename %in% SEDIFiles){
+    if(filename %in% EvaluationFiles){
       tmp <- read.table(filename, header=TRUE, sep="\t",as.is=T,skip=0,fill=TRUE,check.names=FALSE,quote = "\"", encoding = "UTF-8")
       if(nrow(tmp)>0){
         tmp$Round <- i
@@ -34,6 +34,8 @@ for(i in 1:3){
 }
 #Plot histograms of the SEDI scores per taxonomic group, panels are split by primer and sampling round.
 ggplot(RFEvaluation,aes(MeanSEDI)) + geom_histogram() + facet_grid(Primer~Round)
+#Plot histograms of the TSS scores per taxonomic group, panels are split by primer and sampling round.
+ggplot(RFEvaluation,aes(MeanTSS)) + geom_histogram() + facet_grid(Primer~Round)
 
 #Plot Venn diagram of the number of indicator taxa held in common between sampling rounds.
 #Indicator status is defined a taxonomic group with a SEDI score for its random forest model exceeding a certain threshold.
@@ -42,7 +44,19 @@ SEDIThreshold = 0.5
 RFEvaluationFiltered <- RFEvaluation[RFEvaluation$MeanSEDI >= SEDIThreshold & RFEvaluation$Primer==Primer,]
 tmp <- with(RFEvaluationFiltered[,c("Taxa","Round")],split(Taxa,Round))
 if(SEDIThreshold>=0){
-  ggVennDiagram(tmp)+theme(plot.title = element_text(hjust = 0.5),plot.subtitle = element_text(hjust = 0.5),legend.position="bottom")+labs(title=paste("Indicator",TaxonomicRanks[rank],"by sample time point"),subtitle=paste("Primer:",Primer,", SEDI >",SEDIThreshold)) + scale_fill_gradient(low = "yellow", high = "blue")
+  ggVennDiagram(tmp)+theme(plot.title = element_text(hjust = 0.5),plot.subtitle = element_text(hjust = 0.5),legend.position="bottom")+labs(title=paste(TaxonomicRanks[rank],"by sample time point"),subtitle=paste("Primer:",Primer,", SEDI >",SEDIThreshold)) + scale_fill_gradient(low = "yellow", high = "blue")
 } else{
-  ggVennDiagram(tmp)+theme(plot.title = element_text(hjust = 0.5),plot.subtitle = element_text(hjust = 0.5),legend.position="bottom")+labs(title=paste("Indicator",TaxonomicRanks[rank],"by sample time point"),subtitle=paste("Primer:",Primer,", No SEDI cut-off")) + scale_fill_gradient(low = "yellow", high = "blue")
+  ggVennDiagram(tmp)+theme(plot.title = element_text(hjust = 0.5),plot.subtitle = element_text(hjust = 0.5),legend.position="bottom")+labs(title=paste(TaxonomicRanks[rank],"by sample time point"),subtitle=paste("Primer:",Primer,", No SEDI cut-off")) + scale_fill_gradient(low = "yellow", high = "blue")
+}
+
+#Plot Venn diagram of the number of indicator taxa held in common between sampling rounds.
+#Indicator status is defined a taxonomic group with a TSS score for its random forest model exceeding a certain threshold.
+Primer <- "16S"
+TSSThreshold = 0.5
+RFEvaluationFiltered <- RFEvaluation[RFEvaluation$MeanTSS >= TSSThreshold & RFEvaluation$Primer==Primer,]
+tmp <- with(RFEvaluationFiltered[,c("Taxa","Round")],split(Taxa,Round))
+if(TSSThreshold>=0){
+  ggVennDiagram(tmp)+theme(plot.title = element_text(hjust = 0.5),plot.subtitle = element_text(hjust = 0.5),legend.position="bottom")+labs(title=paste(TaxonomicRanks[rank],"by sample time point"),subtitle=paste("Primer:",Primer,", TSS >",TSSThreshold)) + scale_fill_gradient(low = "yellow", high = "blue")
+} else{
+  ggVennDiagram(tmp)+theme(plot.title = element_text(hjust = 0.5),plot.subtitle = element_text(hjust = 0.5),legend.position="bottom")+labs(title=paste(TaxonomicRanks[rank],"by sample time point"),subtitle=paste("Primer:",Primer,", No TSS cut-off")) + scale_fill_gradient(low = "yellow", high = "blue")
 }
