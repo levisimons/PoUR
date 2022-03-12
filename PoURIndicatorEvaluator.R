@@ -20,7 +20,8 @@ TaxonomicRanks <- c("kingdom","phylum","class","order","family","genus","species
 #These were generated here: https://github.com/levisimons/PoUR/blob/main/PoURIndicators.R
 EvaluationFiles <- list.files(path=wd,pattern=paste('RFEvaluation(.*?)Round(.*?)Rank',rank,sep=""))
 
-#Iterate over sample rounds and primer sets.
+#Iterate over sample rounds and primer sets.  Aggregate random forest SDM evaluations.
+#This includes accuracy and relative importance of variables.
 if(length(list.files(path=wd,pattern="RFEvaluationAllRoundsSpecies.txt"))<1){
   #Primers
   Primers <- c("16S", "18S","CO1","VERT12S","PITS","FITS")
@@ -225,6 +226,8 @@ SampleInputTotal$RegionalTOS[is.na(SampleInputTotal$RegionalTOS)] <- 0
 #Output summary to a file.
 write.table(SampleInputTotal,"PoUReDNAEvaluations.txt",quote=FALSE,sep="\t",row.names = FALSE)
 
+##Generate fasta files for each primer.  These are use as input in BLAST-n in order to check
+#for likeliest matches between our ASVs and taxonomically identified sequences.
 require(seqRFLP)
 Primers <- c("16S", "18S","CO1","VERT12S","PITS","FITS")
 #Aggregate model evaluations.
@@ -268,7 +271,7 @@ for(Primer in Primers){
     SequenceInputTmp[,TaxonomicLevel] <- gsub(paste(TaxonomicLevel,":",sep=""),"",SequenceInputTmp[,TaxonomicLevel])
     SequenceInputTmp <- SequenceInputTmp[SequenceInputTmp$taxonomy!="Unclassified" & !is.na(SequenceInputTmp$sequence) & !is.na(SequenceInputTmp[,TaxonomicLevel]),]
     SequenceInputTmp[SequenceInputTmp=="" | SequenceInputTmp=="NA"] <- NA
-    SequenceInputTmp$FASTA_ID <- paste(SequenceInputTmp[,colnames(SequenceInputTmp[grepl("_seq_number",colnames(SequenceInputTmp))])],SequenceInputTmp$Round,SequenceInputTmp$species,sep=".")
+    SequenceInputTmp$FASTA_ID <- SequenceInputTmp[,colnames(SequenceInputTmp[grepl("_seq_number",colnames(SequenceInputTmp))])]
     #Get taxa which have accurate random forest models.
     RFEvaluationFiltered <- RFEvaluation[RFEvaluation$MeanTSS >= TSSThreshold | RFEvaluation$MeanSEDI >= SEDIThreshold,]
     RFEvaluationFiltered <- RFEvaluationFiltered[RFEvaluationFiltered$Primer==Primer & RFEvaluationFiltered$Round==Round,]
@@ -346,9 +349,75 @@ for(Primer in Primers){
   }
 }
 
-CompletedFiles <- list.files(path=wd,pattern='AccurateASVAssessments_(.*?).txt')
+##Generate text files containing the full taxonomies of the input ASVs,
+#along with the BLAST results of the best ASV matches which also correspond to potential indicator species.
+RFEvaluation <- read.table("RFEvaluationAllRoundsSpecies.txt",header=T, sep="\t",as.is=T,skip=0,fill=TRUE,check.names=FALSE,quote = "\"", encoding = "UTF-8")
+TSSThreshold = 0.5
+SEDIThreshold = 0.5
+TaxonomicLevel <- "species"
+Primers <- c("16S", "18S","CO1","VERT12S","PITS","FITS")
+for(Primer in Primers){
+  DetailedTaxonomies <- list.files(path=wd,pattern=paste("R(.*?)",Primer,"_ASV_taxonomy_detailed.txt",sep=""))
+  SequenceInput <- data.frame()
+  for(DetailedTaxonomy in DetailedTaxonomies){
+    SequenceInputTmp <- read.table(DetailedTaxonomy, header=TRUE, sep="\t",as.is=T,skip=0,fill=TRUE,check.names=FALSE,quote = "\"", encoding = "UTF-8")
+    #Extract sample round from filename.
+    Round <- as.numeric(gsub("R([0-9]+).*$","\\1",DetailedTaxonomy))
+    #Remove sequences with missing taxonomy
+    SequenceInputTmp <- SequenceInputTmp[SequenceInputTmp$taxonomy!="not_found",]
+    #Remove missing sequence rows.
+    SequenceInputTmp <- SequenceInputTmp[SequenceInputTmp$sequence!="",]
+    #Remove sequences with an assigned species confidence below 80%.
+    SequenceInputTmp$speciesBayesianConfidence <- as.numeric(gsub(".*species:([0-9]+).*;$","\\1",SequenceInputTmp$taxonomy_confidence))
+    SequenceInputTmp <- SequenceInputTmp[SequenceInputTmp$speciesBayesianConfidence >= 80 & !is.na(SequenceInputTmp$speciesBayesianConfidence),]
+    SequenceInputTmp$Round <- Round#Assign sampling round number to sequence data.
+    #Select sequences which show up as potential indicators using a TSS score cutoff.
+    SequenceInputTmp <- SequenceInputTmp[,c(paste(Primer,"_seq_number",sep=""),"Round","input_sequence_length","sequence","taxonomy","accessions")]
+    #Clean up sequence data.
+    SequenceInputTmp <- SequenceInputTmp[!duplicated(SequenceInputTmp),]
+    SequenceInputTmp <- tidyr::separate(data=SequenceInputTmp,col=taxonomy,sep=";",into=c("superkingdom","phylum","class","order","family","genus","species"),remove=F)
+    SequenceInputTmp[,c("superkingdom","phylum","class","order","family","genus","species")] <- as.data.frame(apply(SequenceInputTmp[,c("superkingdom","phylum","class","order","family","genus","species")],2,function(y) gsub(".*:","",y)))
+    SequenceInputTmp <- SequenceInputTmp[SequenceInputTmp$taxonomy!="Unclassified" & !is.na(SequenceInputTmp$sequence) & !is.na(SequenceInputTmp[,TaxonomicLevel]),]
+    SequenceInputTmp[SequenceInputTmp=="" | SequenceInputTmp=="NA"] <- NA
+    SequenceInputTmp$FASTA_ID <- SequenceInputTmp[,colnames(SequenceInputTmp[grepl("_seq_number",colnames(SequenceInputTmp))])]
+    #Get taxa which have accurate random forest models.
+    RFEvaluationFiltered <- RFEvaluation[RFEvaluation$MeanTSS >= TSSThreshold | RFEvaluation$MeanSEDI >= SEDIThreshold,]
+    RFEvaluationFiltered <- RFEvaluationFiltered[RFEvaluationFiltered$Primer==Primer & RFEvaluationFiltered$Round==Round,]
+    SequenceInputTmp <- SequenceInputTmp[SequenceInputTmp$species %in% unique(RFEvaluationFiltered$Taxa),]
+    SequenceInputTmp <- SequenceInputTmp[!duplicated(SequenceInputTmp),]
+    SequenceInput <- rbind(SequenceInput,SequenceInputTmp)
+  }
+  BLASTAssessment <- read.table(paste('AccurateASVAssessments_',Primer,'.txt',sep=""),header=T, sep="\t",as.is=T,skip=0,fill=TRUE,check.names=FALSE,quote = "\"", encoding = "UTF-8")
+  SequencesWithBLAST <- dplyr::left_join(SequenceInput,BLASTAssessment,by=c("FASTA_ID"="qseqid"))
+  write.table(SequencesWithBLAST,paste("SequencesWithBLAST_",Primer,".txt",sep=""),quote=FALSE,sep="\t",row.names = FALSE)
+}
+
+##Generate files adding the full taxonomy of each indicator ASV, along with the full taxonomies
+#of the best BLAST-n match.
+CompletedFiles <- list.files(path=wd,pattern='SequencesWithBLAST_(.*?).txt')
 for(CompletedFile in CompletedFiles){
-  BLASTAssessment <- read.table(CompletedFile,header=T, sep="\t",as.is=T,skip=0,fill=TRUE,check.names=FALSE,quote = "\"", encoding = "UTF-8")
-  BLASTAssessment$qseqid <- gsub("\\..*","",BLASTAssessment$qseqid)
-  write.table(BLASTAssessment,CompletedFile,quote=FALSE,sep="\t",row.names = FALSE)
+  SequencesWithBLAST <- read.table(CompletedFile,header=T, sep="\t",as.is=T,skip=0,fill=TRUE,check.names=FALSE,quote = "\"", encoding = "UTF-8")
+  SequencesWithBLAST <- SequencesWithBLAST[!is.na(SequencesWithBLAST$uid),]
+  FullTaxonomy <- data.frame()
+  for(taxon in unique(SequencesWithBLAST$uid)){
+    tmp <- classification(taxon,db='ncbi')
+    tmp <- as.data.frame(tmp[1])
+    names(tmp) <-  gsub(paste("X",taxon,".",sep=""),"",names(tmp))
+    tmp <- tmp[tmp$rank %in% c("species","genus","family","order","class","phylum","superkingdom"),]
+    ranks <- as.data.frame(c("species","genus","family","order","class","phylum","superkingdom"))
+    colnames(ranks) <- c("rank")
+    tmp <- merge(tmp,ranks,all.y=T)
+    tmp$id <- NULL
+    tmp <- as.data.frame(t(tmp))
+    colnames(tmp) <- tmp[rownames(tmp)=='rank',]
+    tmp <- tmp[!(rownames(tmp) %in% c("rank")),]
+    tmp$uid <- taxon
+    tmp <- tmp[,c("uid","species","genus","family","order","class","phylum","superkingdom")]
+    FullTaxonomy <- rbind(FullTaxonomy,tmp)
+    print(paste("Primer: ",Primer," taxon ",nrow(FullTaxonomy)," of ",length(unique(SequencesWithBLAST$uid)),sep=""))
+  }
+  colnames(FullTaxonomy) <- paste("Matched_",colnames(FullTaxonomy),sep="")
+  SequencesWithFullTaxonomy <- dplyr::left_join(SequencesWithBLAST,FullTaxonomy,by=c("uid"="Matched_uid"))
+  SequencesWithFullTaxonomy <- SequencesWithFullTaxonomy[,c("FASTA_ID","sseqid","Round","input_sequence_length","evalue","bitscore","uid","rank","CommonName","species","Matched_species","genus","Matched_genus","family","Matched_family","order","Matched_order","class","Matched_class","phylum","Matched_phylum","superkingdom","Matched_superkingdom")]
+  write.table(SequencesWithFullTaxonomy,paste("SequencesWithFullTaxonomy_",Primer,".txt",sep=""),quote=FALSE,sep="\t",row.names = FALSE)
 }
